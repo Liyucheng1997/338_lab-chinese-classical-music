@@ -1,0 +1,21 @@
+{
+  "name": "sizhu-3d-chinese-classical-music",
+  "version": "1.0.0",
+  "description": "丝竹三韵 · Three.js 三维古筝、二胡、唢呐，由物理建模合成的声音驱动演奏",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node tools/serve.js",
+    "build": "node tools/build-pages.js",
+    "render": "node tools/render-all.js",
+    "test": "node --test tools/test-runtime.js && node tools/test-all.js",
+    "test:runtime": "node --test tools/test-runtime.js",
+    "tune": "node tools/tuning-report.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}

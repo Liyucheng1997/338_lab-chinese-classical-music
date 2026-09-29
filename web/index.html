@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>丝竹三韵 · 古筝二胡唢呐</title>
+<meta name="description" content="Three.js 三维建模的古筝、二胡、唢呐，由物理建模合成的声音驱动演奏动画：《渔舟唱晚》《二泉映月》《百鸟朝凤》。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23a3271f'/%3E%3Ctext x='32' y='46' font-size='38' text-anchor='middle' fill='%23f6efe0' font-family='serif'%3E乐%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "../node_modules/three/build/three.module.js",
+  "three/addons/": "../node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="stage" tabindex="0" aria-label="三维演奏厅：点击琴弦、指板或音孔演奏，拖动旋转视角"></canvas>
+
+<div id="loader">
+  <div class="loader-inner">
+    <div class="seal">丝<br>竹</div>
+    <h1 class="loader-title">丝竹三韵</h1>
+    <p class="loader-sub">古筝 · 二胡 · 唢呐 三维复原演奏</p>
+    <div class="loader-bar"><i id="loader-fill"></i></div>
+    <p id="loader-text" class="loader-text">正在备料……</p>
+    <button id="enter-btn" class="enter-btn" hidden>入席聆听</button>
+    <p class="loader-hint">建议佩戴耳机 · 每个音都由弦、弓、簧的物理模型实时算出</p>
+  </div>
+</div>
+
+<header id="brand">
+  <div class="seal small">丝<br>竹</div>
+  <div>
+    <h1>丝竹三韵</h1>
+    <p>古筝 · 二胡 · 唢呐 · 物理建模</p>
+  </div>
+</header>
+
+<div id="caption"><span class="cap-song"></span><span class="cap-sec"></span></div>
+
+<aside id="songs">
+  <h2 title="点击收起 / 展开">曲 目</h2>
+  <div id="song-list"></div>
+  <div class="row">
+    <label for="tuning">律制</label>
+    <select id="tuning" title="改变后重新合成当前曲目">
+      <option value="equal">十二平均律</option>
+      <option value="pythagorean">五度相生律</option>
+      <option value="just">纯律</option>
+    </select>
+    <button id="btn-wav" class="mini" disabled title="下载当前曲目的 44.1 kHz 16 位 WAV">下载 WAV</button>
+  </div>
+  <div class="free-play">
+    <h3>亲手演奏</h3>
+    <div class="inst-btns" id="inst-btns">
+      <button data-inst="guzheng">古筝</button><button data-inst="erhu">二胡</button><button data-inst="suona">唢呐</button><button data-inst="all">全景</button>
+    </div>
+    <p id="play-hint"></p>
+    <label class="check"><input type="checkbox" id="snap" checked> 二胡指位吸附五声音阶</label>
+  </div>
+</aside>
+
+<div id="hud">
+  <div class="now-note"><b id="note-name">—</b><span id="note-hz"></span><em id="note-tech"></em></div>
+  <canvas id="roll" aria-hidden="true"></canvas>
+</div>
+
+<footer id="transport">
+  <button id="btn-play" class="icon-btn" title="播放 / 暂停（空格）" disabled>
+    <svg viewBox="0 0 24 24" class="i-play"><path d="M8 5v14l11-7z"/></svg>
+    <svg viewBox="0 0 24 24" class="i-pause"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+  </button>
+  <button id="btn-stop" class="icon-btn" title="停止发声（Esc）" disabled>
+    <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+  </button>
+  <div class="now">
+    <div class="now-title" id="now-title">未选曲</div>
+    <div class="progress" id="progress" role="slider" tabindex="0" aria-label="播放进度" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+      <div class="progress-fill" id="progress-fill"></div><div class="progress-marks" id="progress-marks"></div>
+    </div>
+  </div>
+  <div class="time" id="time">0:00 / 0:00</div>
+  <label class="slider">音<input id="volume" type="range" min="0" max="1" step="0.01" value="0.85"></label>
+  <button id="btn-cam" class="toggle on" title="演奏时自动运镜">运镜</button>
+  <button id="btn-roll" class="toggle on" title="显示音符卷帘">卷帘</button>
+  <button id="btn-quality" class="toggle on" title="画质">高画质</button>
+</footer>
+
+<div id="tooltip"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

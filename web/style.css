@@ -1,0 +1,249 @@
+:root {
+  --gold: #d9b26a;
+  --gold-bright: #f3d693;
+  --gold-dim: rgba(217, 178, 106, 0.35);
+  --vermilion: #b8322a;
+  --ink: #0b0806;
+  --panel: rgba(14, 10, 8, 0.62);
+  --text: #eadfc8;
+  --text-dim: #a8987c;
+  --font-brush: "STXingkai", "华文行楷", "Xingkai SC", "Ma Shan Zheng", "STKaiti", "KaiTi", "楷体", serif;
+  --font-kai: "KaiTi", "楷体", "STKaiti", "Kaiti SC", serif;
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; height: 100%; overflow: hidden;
+  background: #070504; color: var(--text);
+  font-family: var(--font-serif);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+#stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+
+/* ---------- 印章 ---------- */
+.seal {
+  width: 64px; height: 64px; border: 3px solid var(--vermilion); border-radius: 6px;
+  color: var(--vermilion); font-family: var(--font-kai); font-weight: 700;
+  font-size: 24px; line-height: 27px; text-align: center; padding-top: 4px;
+  background: rgba(184, 50, 42, 0.08); letter-spacing: 0;
+  box-shadow: inset 0 0 0 2px rgba(184, 50, 42, 0.25);
+}
+.seal.small { width: 46px; height: 46px; font-size: 17px; line-height: 19px; padding-top: 3px; border-width: 2px; flex: none; }
+
+/* ---------- 载入 ---------- */
+#loader {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: radial-gradient(ellipse at 50% 40%, #2a1a10 0%, #0c0806 55%, #040302 100%);
+  transition: opacity 1.4s ease, visibility 1.4s;
+}
+#loader.hide { opacity: 0; visibility: hidden; }
+.loader-inner { text-align: center; display: flex; flex-direction: column; align-items: center; }
+.loader-title {
+  font-family: var(--font-brush); font-weight: 400; font-size: 88px; margin: 22px 0 4px;
+  color: var(--gold-bright); letter-spacing: 12px;
+  text-shadow: 0 0 30px rgba(243, 190, 100, 0.35), 0 2px 0 #000;
+}
+.loader-sub { margin: 0 0 34px; color: var(--text-dim); letter-spacing: 6px; font-size: 15px; }
+.loader-bar { width: 320px; height: 2px; background: rgba(217, 178, 106, 0.15); overflow: hidden; }
+.loader-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, transparent, var(--gold-bright)); transition: width .2s; }
+.loader-text { margin-top: 14px; font-size: 13px; color: var(--text-dim); letter-spacing: 3px; min-height: 1em; }
+.loader-hint { margin-top: 30px; font-size: 12px; color: #6f6250; letter-spacing: 2px; }
+.enter-btn {
+  margin-top: 8px; padding: 12px 46px; font-family: var(--font-kai); font-size: 22px; letter-spacing: 10px;
+  color: var(--gold-bright); background: linear-gradient(180deg, rgba(120, 30, 22, .55), rgba(60, 14, 10, .7));
+  border: 1px solid var(--gold-dim); border-radius: 2px; cursor: pointer;
+  box-shadow: 0 0 24px rgba(184, 50, 42, .25); transition: all .3s;
+  animation: breathe 2.6s ease-in-out infinite;
+}
+.enter-btn:hover { border-color: var(--gold); box-shadow: 0 0 36px rgba(243, 190, 100, .35); }
+@keyframes breathe { 50% { box-shadow: 0 0 40px rgba(243, 190, 100, .3); } }
+
+/* ---------- 标题 ---------- */
+#brand {
+  position: fixed; left: 28px; top: 22px; display: flex; gap: 14px; align-items: center;
+  pointer-events: none; z-index: 5;
+}
+#brand h1 {
+  margin: 0; font-family: var(--font-brush); font-weight: 400; font-size: 38px; letter-spacing: 6px;
+  color: var(--gold-bright); text-shadow: 0 0 18px rgba(243, 190, 100, .25), 0 2px 2px #000;
+}
+#brand p { margin: 2px 0 0; font-size: 12px; color: var(--text-dim); letter-spacing: 3px; }
+
+/* ---------- 字幕 ---------- */
+#caption {
+  position: fixed; top: 34px; left: 50%; transform: translateX(-50%);
+  text-align: center; pointer-events: none; z-index: 4; opacity: 0; transition: opacity 1.2s ease;
+  display: flex; flex-direction: column; align-items: center;
+}
+#caption.show { opacity: 1; }
+#caption .cap-song { font-size: 13px; letter-spacing: 8px; color: var(--text-dim); }
+#caption .cap-sec {
+  font-family: var(--font-brush); font-size: 46px; letter-spacing: 10px; color: var(--gold-bright);
+  text-shadow: 0 0 26px rgba(243, 180, 90, .45), 0 2px 3px #000; margin-top: 2px;
+}
+
+/* ---------- 曲目 ---------- */
+#songs {
+  position: fixed; right: 22px; top: 22px; width: 284px; z-index: 5;
+  background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(217, 178, 106, .18); padding: 18px 18px 14px;
+  max-height: calc(100vh - 150px); overflow-y: auto;
+}
+#songs::before, #songs::after {
+  content: ""; position: absolute; width: 14px; height: 14px; border: 1px solid var(--gold);
+  pointer-events: none;
+}
+#songs::before { left: 5px; top: 5px; border-right: none; border-bottom: none; }
+#songs::after { right: 5px; bottom: 5px; border-left: none; border-top: none; }
+#songs.collapsed { width: auto; padding-bottom: 6px; }
+#songs.collapsed .song-card, #songs.collapsed .free-play { display: none; }
+#songs h2 { cursor: pointer; }
+#songs h2 {
+  margin: 0 0 12px; font-family: var(--font-kai); font-weight: 400; font-size: 18px; letter-spacing: 10px;
+  color: var(--gold); text-align: center;
+}
+.song-card {
+  position: relative; padding: 9px 12px 9px 14px; margin-bottom: 7px; cursor: pointer;
+  border: 1px solid rgba(217, 178, 106, .12); background: rgba(40, 24, 14, .35);
+  transition: background .25s, border-color .25s;
+}
+.song-card:hover { background: rgba(70, 38, 20, .45); border-color: rgba(217, 178, 106, .35); }
+.song-card.active { border-color: var(--gold); background: rgba(95, 34, 22, .45); }
+.song-card.active::before { content: ""; position: absolute; left: -1px; top: 10px; bottom: 10px; width: 3px; background: var(--vermilion); }
+.song-card .t { font-family: var(--font-brush); font-size: 23px; color: var(--gold-bright); letter-spacing: 3px; }
+.song-card .s { font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-left: 8px; }
+.song-card .d {
+  font-size: 12px; line-height: 1.6; color: #b9ab8e; margin-top: 3px;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.song-card .m { font-size: 11px; color: #8f8068; margin-top: 6px; letter-spacing: 1px; display: none; }
+.song-card:hover .d { -webkit-line-clamp: 2; }
+.song-card.active .d { -webkit-line-clamp: unset; color: #cbbd9f; }
+.song-card.active .m { display: block; }
+.free-play { border-top: 1px solid rgba(217, 178, 106, .15); margin-top: 6px; padding-top: 10px; }
+
+/* ---------- 控制条 ---------- */
+#transport {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 5;
+  display: flex; align-items: center; gap: 14px; padding: 10px 18px;
+  background: var(--panel); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(217, 178, 106, .18); width: min(1040px, calc(100vw - 40px));
+}
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--gold-dim); background: rgba(60, 20, 14, .5);
+  display: grid; place-items: center; cursor: pointer; flex: none; transition: all .2s; padding: 0;
+}
+.icon-btn svg { width: 18px; height: 18px; fill: var(--gold-bright); }
+.icon-btn:hover:not(:disabled) { border-color: var(--gold); background: rgba(120, 36, 24, .6); }
+.icon-btn:disabled { opacity: .35; cursor: default; }
+#btn-play .i-pause { display: none; }
+#btn-play.playing .i-play { display: none; }
+#btn-play.playing .i-pause { display: block; }
+.now { flex: 1; min-width: 160px; }
+.now-title { font-family: var(--font-kai); font-size: 15px; color: var(--gold-bright); letter-spacing: 3px; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progress { position: relative; height: 14px; cursor: pointer; }
+.progress::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: rgba(217, 178, 106, .18); }
+.progress-fill { position: absolute; left: 0; top: 6px; height: 2px; width: 0; background: linear-gradient(90deg, #8a5a2a, var(--gold-bright)); box-shadow: 0 0 8px rgba(243, 214, 147, .6); }
+.progress-marks { position: absolute; inset: 0; }
+.progress-marks span {
+  position: absolute; top: 2px; width: 1px; height: 10px; background: rgba(217, 178, 106, .45);
+}
+.progress-marks span::after {
+  content: attr(data-name); position: absolute; bottom: 12px; left: 0; transform: translateX(-2px);
+  font-size: 10px; color: #8f8068; white-space: nowrap; letter-spacing: 1px; opacity: 0; transition: opacity .2s;
+}
+.progress:hover .progress-marks span::after { opacity: 1; }
+.time { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 78px; text-align: center; }
+.slider { display: flex; align-items: center; gap: 6px; font-family: var(--font-kai); color: var(--gold); font-size: 14px; }
+.slider span { font-size: 11px; color: var(--text-dim); min-width: 34px; font-family: var(--font-serif); }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 80px; height: 2px; background: rgba(217, 178, 106, .25); outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 11px; height: 11px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 6px rgba(243, 214, 147, .8); cursor: pointer; }
+input[type=range]::-moz-range-thumb { width: 11px; height: 11px; border: none; border-radius: 50%; background: var(--gold-bright); cursor: pointer; }
+.toggle {
+  font-family: var(--font-kai); font-size: 13px; letter-spacing: 2px; padding: 5px 10px; cursor: pointer;
+  background: transparent; color: var(--text-dim); border: 1px solid rgba(217, 178, 106, .2); border-radius: 2px; transition: all .2s;
+}
+.toggle.on { color: var(--gold-bright); border-color: var(--gold-dim); background: rgba(120, 36, 24, .35); }
+
+/* ---------- 提示 ---------- */
+#tooltip {
+  position: fixed; z-index: 10; pointer-events: none; opacity: 0; transition: opacity .15s;
+  background: rgba(12, 8, 6, .86); border: 1px solid rgba(217, 178, 106, .35); padding: 8px 12px;
+  font-size: 12px; line-height: 1.7; color: var(--text); min-width: 150px; transform: translate(16px, 16px);
+}
+#tooltip.show { opacity: 1; }
+#tooltip .tt-name { font-family: var(--font-kai); font-size: 15px; color: var(--gold-bright); letter-spacing: 2px; }
+#tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; color: #a8987c; }
+#tooltip .tt-row b { font-weight: 400; color: var(--text); }
+#tooltip .tt-row.on b { color: var(--gold-bright); }
+#tooltip .tt-row.on { color: var(--gold); }
+
+/* ---------- 本项目新增 ---------- */
+.song-card .glyph {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; margin-right: 8px; vertical-align: 3px;
+  border: 1px solid var(--gold-dim); color: var(--gold-bright); font-family: var(--font-kai); font-size: 14px;
+  background: rgba(163, 39, 31, .25);
+}
+.song-card .st { font-size: 11px; color: #9c8c70; margin-top: 5px; letter-spacing: 1px; min-height: 1em; }
+.song-card .st b { color: var(--gold-bright); font-weight: 400; }
+.song-card .bar { height: 2px; margin-top: 5px; background: rgba(217, 178, 106, .15); overflow: hidden; }
+.song-card .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #8a5a2a, var(--gold-bright)); transition: width .2s; }
+#songs .row { display: flex; align-items: center; gap: 8px; margin: 10px 0 4px; font-family: var(--font-kai); color: var(--gold); font-size: 14px; }
+#songs select, .mini {
+  font-family: var(--font-serif); font-size: 12px; color: var(--text); background: rgba(40, 24, 14, .6);
+  border: 1px solid rgba(217, 178, 106, .25); padding: 4px 6px; border-radius: 2px;
+}
+.mini { cursor: pointer; margin-left: auto; color: var(--gold-bright); }
+.mini:disabled { opacity: .4; cursor: default; }
+.inst-btns { display: flex; gap: 6px; margin: 6px 0 8px; }
+.inst-btns button {
+  flex: 1; font-family: var(--font-kai); font-size: 14px; letter-spacing: 2px; padding: 5px 0; cursor: pointer;
+  background: transparent; color: var(--text-dim); border: 1px solid rgba(217, 178, 106, .2); border-radius: 2px;
+}
+.inst-btns button.on { color: var(--gold-bright); border-color: var(--gold); background: rgba(120, 36, 24, .45); }
+.check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #b7a88b; margin-top: 6px; cursor: pointer; }
+.check input { accent-color: #b8322a; }
+
+#hud {
+  position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 4;
+  width: min(900px, calc(100vw - 380px)); pointer-events: none; transition: opacity .6s;
+}
+#hud.hide-roll #roll { display: none; }
+#hud.idle { opacity: .0; }
+.now-note { display: flex; align-items: baseline; gap: 10px; justify-content: center; margin-bottom: 4px; text-shadow: 0 1px 3px #000; }
+.now-note b { font-family: var(--font-serif); font-weight: 400; font-size: 24px; color: var(--gold-bright); min-width: 48px; text-align: right; }
+.now-note span { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 70px; }
+.now-note em { font-style: normal; font-family: var(--font-kai); font-size: 15px; letter-spacing: 3px; color: #e6a070; min-width: 80px; }
+#roll {
+  display: block; width: 100%; height: 64px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+button:focus-visible, select:focus-visible, .progress:focus-visible { outline: 1px solid var(--gold-bright); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+  #songs { width: 240px; }
+  #hud { width: calc(100vw - 32px); bottom: 150px; }
+  #brand h1 { font-size: 28px; }
+  #transport { flex-wrap: wrap; gap: 8px 10px; }
+  .loader-title { font-size: 60px; }
+}
+@media (max-width: 600px) {
+  #songs { left: 16px; right: 16px; width: auto; top: auto; bottom: 150px; max-height: 38vh; }
+  #songs.collapsed { left: auto; }
+  #brand { left: 16px; top: 14px; }
+  #hud { display: none; }
+  .loader-bar { width: 240px; }
+  #btn-quality, #btn-roll { display: none; }
+}
+.free-play h3 { margin: 0 0 6px; font-family: var(--font-kai); font-weight: 400; font-size: 15px; color: var(--gold); letter-spacing: 4px; }
+.free-play p { font-size: 12px; line-height: 1.7; color: #b7a88b; margin: 4px 0; }
+.free-play b { color: var(--gold-bright); font-weight: 400; }
+kbd {
+  display: inline-block; font-family: var(--font-serif); font-size: 11px; min-width: 16px; text-align: center;
+  border: 1px solid rgba(217, 178, 106, .35); padding: 0 3px; border-radius: 2px; color: var(--gold-bright);
+}
+
+#songs.collapsed .row { display: none; }

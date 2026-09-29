@@ -1,0 +1,53 @@
+[
+  {
+    "id": "yuzhou",
+    "title": "渔舟唱晚",
+    "instrument": "古筝",
+    "temperament": "equal",
+    "sampleRate": 44100,
+    "seconds": 241.6,
+    "peak": 0.919,
+    "rms": 0.0942,
+    "tuning": {
+      "measured": 20,
+      "method": "isolated-string-combinations",
+      "skipped": 0,
+      "meanAbsCents": 0.26,
+      "maxAbsCents": 0.42
+    }
+  },
+  {
+    "id": "erquan",
+    "title": "二泉映月",
+    "instrument": "二胡",
+    "temperament": "equal",
+    "sampleRate": 44100,
+    "seconds": 289.1,
+    "peak": 0.712,
+    "rms": 0.1062,
+    "tuning": {
+      "measured": 523,
+      "method": "stable-monophonic-notes",
+      "skipped": 49,
+      "meanAbsCents": 1.07,
+      "maxAbsCents": 4.46
+    }
+  },
+  {
+    "id": "bainiao",
+    "title": "百鸟朝凤",
+    "instrument": "唢呐",
+    "temperament": "equal",
+    "sampleRate": 44100,
+    "seconds": 231.3,
+    "peak": 0.43,
+    "rms": 0.0943,
+    "tuning": {
+      "measured": 301,
+      "method": "stable-monophonic-notes",
+      "skipped": 205,
+      "meanAbsCents": 0.99,
+      "maxAbsCents": 3.65
+    }
+  }
+]
