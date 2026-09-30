@@ -34,7 +34,8 @@ const LEFT_MAP = [[1, 6], [2, 5], [3, 4]];
 const RIGHT_MAP = [[1, 3], [2, 2], [3, 1], [4, 0]];
 
 export class Suona {
-  constructor(scene, tex, handMats, effects) {
+  /** opts.hand：手的选项；opts.baseY：管身高度（站立吹奏者口高）。 */
+  constructor(scene, tex, handMats, effects, opts = {}) {
     this.effects = effects;
     this.group = new THREE.Group();
     this.group.name = 'suona';
@@ -42,12 +43,13 @@ export class Suona {
     this.inst = new THREE.Group();
     this.group.add(this.inst);
     // 演奏姿势：哨子朝上后方（口），碗朝下前方
-    this.inst.position.set(0, 1.02, 0);
+    this.baseY = opts.baseY ?? 1.02;
+    this.inst.position.set(0, this.baseY, 0);
     this.inst.rotation.set(-0.92, 0.0, 0, 'YXZ');
 
     this.#build(tex);
-    this.left = new Hand('left', handMats);
-    this.right = new Hand('right', handMats);
+    this.left = new Hand('left', handMats, opts.hand);
+    this.right = new Hand('right', handMats, opts.hand);
     this.inst.add(this.left.group, this.right.group);
     this.left.orient(new THREE.Vector3(-1, 0, 0.12), new THREE.Vector3(0.1, 0, -1));
     this.right.orient(new THREE.Vector3(1, 0, 0.12), new THREE.Vector3(-0.1, 0, -1));
@@ -261,7 +263,7 @@ export class Suona {
     else if (sounding && n.vib && tau > 0.25) shake = 0.0006 * Math.sin((tau - 0.25) * 2 * Math.PI * 5.8);
     this.left.group.position.copy(this.leftRoot);
     this.right.group.position.copy(this.rightRoot);
-    this.inst.position.y = 1.02 + shake;
+    this.inst.position.y = this.baseY + shake;
 
     // 铜碗随音量发光
     const env = sounding ? (0.45 + 0.55 * (n.v ?? 0.6)) * (1 - 0.3 * smooth(0, 0.6, tau)) * (n.st ? 1.4 : 1) : 0;

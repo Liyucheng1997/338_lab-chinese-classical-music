@@ -34,12 +34,13 @@ function segmentZ(r0, r1, len) {
   return g;
 }
 
-export function createHandMaterials(tex) {
+/** o.skin / o.sheen / o.nail：各人物的肤色（与面部贴图同色）。 */
+export function createHandMaterials(tex, o = {}) {
   const skin = new THREE.MeshPhysicalMaterial({
-    color: 0xcfa283, roughness: 0.55, metalness: 0, sheen: 0.45, sheenColor: new THREE.Color(0xff9c80), sheenRoughness: 0.45,
+    color: o.skin ?? 0xcfa283, roughness: 0.55, metalness: 0, sheen: 0.35, sheenColor: new THREE.Color(o.sheen ?? 0xffa890), sheenRoughness: 0.55,
     clearcoat: 0.06, clearcoatRoughness: 0.6, envMapIntensity: 0.7,
   });
-  const nail = new THREE.MeshPhysicalMaterial({ color: 0xf0c8b8, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.15 });
+  const nail = new THREE.MeshPhysicalMaterial({ color: o.nail ?? 0xf0c8b8, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.15 });
   const arm = skin.clone();
   arm.transparent = true;
   arm.vertexColors = true; // 前臂用顶点 alpha 向肘部淡出
@@ -58,7 +59,7 @@ export class Hand {
   /**
    * @param {'right'|'left'} side
    * @param {object} mats createHandMaterials 的返回值
-   * @param {object} o { picks: 佩戴古筝义甲, sleeve: 显示袖口, scale }
+   * @param {object} o { picks: 佩戴古筝义甲, sleeve: 显示袖口, scale, forearm: false 时不画渐隐前臂（由人物手臂接上） }
    */
   constructor(side, mats, o = {}) {
     this.side = side;
@@ -133,7 +134,22 @@ export class Hand {
       return { joints, lens: s.lens, r, root, pick: !!(o.picks && fi <= 3), flex: 0, spread: 0 };
     });
 
-    // 前臂与袖口（沿 −Z 延伸并淡出）
+    // 前臂与袖口（沿 −Z 延伸并淡出）；接人物时由人物提供前臂
+    if (o.forearm !== false) this.#stubArm(mats, o);
+    const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 12), mats.skin);
+    wrist.scale.set(0.98, 0.5, 0.7);
+    wrist.position.set(0, -0.001, 0.004);
+    wrist.castShadow = true;
+    this.mirror.add(wrist);
+
+    this._v = new THREE.Vector3();
+    this._m = new THREE.Matrix4();
+    this._x = new THREE.Vector3();
+    this._y = new THREE.Vector3();
+    this._z = new THREE.Vector3();
+  }
+
+  #stubArm(mats, o) {
     const armGeo = new THREE.CylinderGeometry(0.026, 0.031, 0.17, 20, 1, true);
     armGeo.rotateX(-Math.PI / 2);
     armGeo.scale(1.15, 0.66, 1);
@@ -148,10 +164,6 @@ export class Hand {
     const arm = new THREE.Mesh(armGeo, mats.arm);
     arm.renderOrder = 2;
     this.mirror.add(arm);
-    const wrist = new THREE.Mesh(new THREE.SphereGeometry(0.03, 16, 12), mats.skin);
-    wrist.scale.set(0.98, 0.5, 0.7);
-    wrist.position.set(0, -0.001, 0.004);
-    this.mirror.add(wrist);
     if (o.sleeve) {
       const slGeo = new THREE.CylinderGeometry(0.05, 0.068, 0.2, 28, 1, true);
       slGeo.rotateX(-Math.PI / 2);
@@ -165,12 +177,6 @@ export class Hand {
       cuff.position.set(0, -0.004, -0.1);
       this.mirror.add(cuff);
     }
-
-    this._v = new THREE.Vector3();
-    this._m = new THREE.Matrix4();
-    this._x = new THREE.Vector3();
-    this._y = new THREE.Vector3();
-    this._z = new THREE.Vector3();
   }
 
   /** 屈曲 flex（弧度，约 0 伸直 ~ 1.6 握拳），spread 为侧向张开。 */

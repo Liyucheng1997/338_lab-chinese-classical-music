@@ -38,7 +38,8 @@ function drapedBox(x, wx, h, z0, z1, segZ = 24, lift = 0) {
 }
 
 export class Guzheng {
-  constructor(scene, tex, handMats, effects) {
+  /** opts.hand：传给两只手的选项（缩放、是否画渐隐前臂）。 */
+  constructor(scene, tex, handMats, effects, opts = {}) {
     this.effects = effects;
     this.group = new THREE.Group();
     this.group.name = 'guzheng';
@@ -51,8 +52,8 @@ export class Guzheng {
     this.#buildStand(tex);
     this.#buildStrings();
 
-    this.right = new Hand('right', handMats, { picks: true });
-    this.left = new Hand('left', handMats);
+    this.right = new Hand('right', handMats, { picks: true, ...opts.hand });
+    this.left = new Hand('left', handMats, opts.hand);
     this.body.add(this.right.group, this.left.group);
     this.right.orient(new THREE.Vector3(-0.28, -0.62, -1), new THREE.Vector3(-0.1, -1, 0.35));
     this.left.orient(new THREE.Vector3(0.18, -0.7, -1), new THREE.Vector3(0.05, -1, 0.4));

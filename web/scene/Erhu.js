@@ -19,7 +19,8 @@ const F_OPEN = [mtof(62), mtof(69)];
 export const ERHU_SEAT = 0.5;
 
 export class Erhu {
-  constructor(scene, tex, handMats, effects) {
+  /** opts.hand：手的选项；opts.seat = false 时不放圆墩（由演奏者的凳子代替）。 */
+  constructor(scene, tex, handMats, effects, opts = {}) {
     this.effects = effects;
     this.group = new THREE.Group();
     this.group.name = 'erhu';
@@ -33,12 +34,12 @@ export class Erhu {
     this.#buildBody(tex);
     this.#buildStrings();
     this.#buildBow();
-    this.#buildSeat();
+    if (opts.seat !== false) this.#buildSeat();
 
-    this.left = new Hand('left', handMats);
+    this.left = new Hand('left', handMats, opts.hand);
     this.inst.add(this.left.group);
     this.left.orient(new THREE.Vector3(1, -0.12, 0.3), new THREE.Vector3(-0.28, 0.05, 1));
-    this.right = new Hand('right', handMats);
+    this.right = new Hand('right', handMats, opts.hand);
     this.bow.add(this.right.group);
     this.right.orient(new THREE.Vector3(1, -0.15, 0.45), new THREE.Vector3(0.1, 0.25, -1));
     this.right.pose([[0.35, 0.25], 0.9, 1.15, 1.25, 1.4]);
