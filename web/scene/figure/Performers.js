@@ -19,7 +19,7 @@ const damp = (cur, target, rate, dt) => cur + (target - cur) * (1 - Math.exp(-ra
 const shadowAll = (o) => o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
 
 // 头部角速度 → 步摇激励
-class HeadMotion {
+export class HeadMotion {
   constructor() {
     this.q = new THREE.Quaternion();
     this.w = new THREE.Vector3();

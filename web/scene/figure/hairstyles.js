@@ -1,4 +1,4 @@
-// 三位乐师的发型与头饰：少女（中分、后髻、双垂鬟、垂发、步摇与花钿）、
+// 四位乐师的发型与头饰：少女（中分、后髻、双垂鬟、垂发、步摇与花钿）、琵琶女（侧分、低髻、碧玉簪）、
 // 老琴师（帽下短白发、稀疏山羊须）、唢呐匠（羊肚手巾下的短黑发、髭须）。
 import * as THREE from 'three';
 import { hairCap, hairlineFn, strandTexture, hairMaterial, hairTube, ribbonStrip } from './Hair.js';
@@ -223,6 +223,74 @@ export function swingDangles(dangles, dt, excite) {
     d.b += d.vb * dt;
     d.g.rotation.set(d.b, 0, d.a);
   }
+}
+
+// ───────────────────────────── 琵琶女 ─────────────────────────────
+
+/** 侧分、两鬓收拢，颈后盘低髻，横插碧玉簪，髻边一朵白玉兰。 */
+export function pipaHair(head, { color = '#140d0a', tip = '#2e2019' } = {}) {
+  const g = new THREE.Group();
+  g.name = 'pipaHair';
+  const line = hairlineFn([[0, 0.074], [0.4, 0.067], [0.72, 0.052], [0.92, 0.03], [1.08, 0.008], [1.3, -0.006], [1.6, -0.028], [2.0, -0.054], [2.6, -0.072], [3.15, -0.078]]);
+  const cap = hairCap(head, {
+    mask: (x, y, z, th) => sstep(line(th) - 0.004, line(th) + 0.003, y),
+    thick: (x, y, z, th) => {
+      let t = 0.0038;
+      t += 0.004 * sstep(0.02, 0.07, y) * sstep(0.0, -0.06, z);          // 头顶后部蓬松
+      if (z > -0.01) t *= 1 - 0.5 * Math.exp(-((x - 0.018) ** 2) / 0.00002) * sstep(0.03, 0.06, y); // 右侧分缝
+      return t;
+    },
+    color, tip, pole: [0, 0.2, -1], part: 0.0012, scalp: '#b89a88', strands: 560, seed: 61,
+  });
+  g.add(cap);
+  const strand = strandTexture(color, { tip, lines: 60, seed: 7 });
+  const hm = hairMaterial(strand);
+  // 低髻：颈后盘成扁圆发髻
+  const axis = new THREE.Vector3(0, -0.2, -1).normalize();
+  const base = surfacePoint(head, new THREE.Vector3(0, -0.28, -1), 0.003);
+  const e1 = new THREE.Vector3(1, 0, 0);
+  const e2 = new THREE.Vector3().crossVectors(axis, e1).normalize();
+  const coil = [];
+  for (let k = 0; k <= 70; k++) {
+    const t = k / 70;
+    const a = t * Math.PI * 2 * 2.6;
+    const rr = 0.034 * (1 - 0.6 * t);
+    const h = 0.004 + 0.02 * Math.sin(t * Math.PI * 0.5);
+    coil.push(base.clone().addScaledVector(e1, Math.cos(a) * rr * 1.25).addScaledVector(e2, Math.sin(a) * rr * 0.85).addScaledVector(axis, h));
+  }
+  const bun = new THREE.Mesh(hairTube(new THREE.CatmullRomCurve3(coil), { r: (t) => 0.013 * (1 - 0.3 * t), flat: 0.85, seg: 180, radial: 16, up: axis, twist: 5, rep: 6 }), hm);
+  bun.castShadow = true;
+  g.add(bun);
+  const core = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), hm);
+  core.scale.set(0.034, 0.024, 0.02);
+  core.position.copy(base).addScaledVector(axis, 0.012);
+  g.add(core);
+  // 碧玉簪：横穿发髻
+  const jade = new THREE.MeshPhysicalMaterial({ color: 0x3f9a6e, roughness: 0.12, transmission: 0.25, thickness: 0.004, clearcoat: 1, clearcoatRoughness: 0.05 });
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0014, 0.13, 10), jade);
+  pin.position.copy(base).addScaledVector(axis, 0.02).addScaledVector(e2, 0.006);
+  pin.rotation.z = Math.PI / 2 - 0.25;
+  g.add(pin);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.0048, 12, 10), jade);
+  knob.position.copy(pin.position).add(new THREE.Vector3(0.063 * Math.cos(0.25), 0.063 * Math.sin(0.25), 0));
+  g.add(knob);
+  // 白玉兰：髻的左上侧
+  const petal = new THREE.MeshPhysicalMaterial({ color: 0xfbf6ee, roughness: 0.45, sheen: 1, sheenColor: new THREE.Color(0xfff0e0) });
+  const fl = new THREE.Group();
+  for (let k = 0; k < 6; k++) {
+    const p = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), petal);
+    p.scale.set(0.0045, 0.0022, 0.011);
+    const a = (k / 6) * Math.PI * 2;
+    p.position.set(Math.sin(a) * 0.004, 0.004, Math.cos(a) * 0.004);
+    p.rotation.set(0.9, a, 0, 'YXZ');
+    fl.add(p);
+  }
+  const dir = axis.clone().addScaledVector(e1, 0.55).addScaledVector(e2, 0.35).normalize();
+  fl.position.copy(surfacePoint(head, dir, 0.014));
+  fl.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  g.add(fl);
+  g.userData.hairMat = hm;
+  return g;
 }
 
 // ───────────────────────────── 老琴师 ─────────────────────────────

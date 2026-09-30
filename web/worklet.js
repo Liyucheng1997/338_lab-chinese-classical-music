@@ -1,7 +1,8 @@
-// 实时演奏引擎（AudioWorklet）：与曲目渲染共用同一套物理建模，只是事件来自鼠标/键盘。
+// 实时演奏引擎（AudioWorklet）：古筝、二胡、唢呐、琵琶与曲目渲染共用同一套物理建模，只是事件来自鼠标/键盘。
 import { Guzheng } from '../src/dsp/guzheng.js';
 import { Erhu } from '../src/dsp/erhu.js';
 import { Suona } from '../src/dsp/suona.js';
+import { Pipa } from '../src/dsp/pipa.js';
 import { Tuning } from '../src/dsp/tuning.js';
 import { Reverb } from '../src/dsp/reverb.js';
 
@@ -14,10 +15,11 @@ class Live extends AudioWorkletProcessor {
     this.g = new Guzheng(fs, { tuning });
     this.e = new Erhu(fs, { tuning });
     this.s = new Suona(fs, { tuning });
+    this.p = new Pipa(fs, { tuning });
     this.rv = new Reverb(fs, { rt60: 2.2, wet: 0.30, damp: 0.4, predelay: 0.016, size: 1.0 });
     this.bufL = new Float64Array(128); this.bufR = new Float64Array(128);
     this.tl = new Float64Array(128); this.tr = new Float64Array(128);
-    this.gGain = 1.6; this.eGain = 0.7; this.sGain = 0.42;
+    this.gGain = 1.6; this.eGain = 0.7; this.sGain = 0.42; this.pGain = 1.5;
     this.eStr = -1; this.eHz = 0; this.sHz = 0; this.sOn = false;
     this.port.onmessage = (ev) => this.onMsg(ev.data);
     this.port.postMessage({ type: 'ready' });
@@ -34,6 +36,16 @@ class Live extends AudioWorkletProcessor {
       case 'pluck': { // 古筝：直接指定弦
         const g = this.g;
         g.pluck(g.pos / fs + 0.004, m.string, m.vel, { cents: m.cents || 0 });
+        break;
+      }
+      case 'pipaPluck': { // 琵琶：弦 + 品（音分）
+        const p = this.p;
+        p.pluck(p.pos / fs + 0.004, m.string, m.vel, { cents: m.cents || 0 });
+        break;
+      }
+      case 'pipaOff': {
+        this.clearPending(this.p);
+        for (let i = 0; i < 4; i++) this.p.damp(this.p.pos / fs, i, 30, 0.5);
         break;
       }
       case 'pluckMidi': {
@@ -155,6 +167,9 @@ class Live extends AudioWorkletProcessor {
     tl.fill(0); tr.fill(0);
     this.s.process(tl, tr, 0, n);
     for (let i = 0; i < n; i++) { bl[i] += tl[i] * this.sGain; br[i] += tr[i] * this.sGain; }
+    tl.fill(0); tr.fill(0);
+    this.p.process(tl, tr, 0, n);
+    for (let i = 0; i < n; i++) { bl[i] += tl[i] * this.pGain; br[i] += tr[i] * this.pGain; }
     this.rv.processBlock(bl, br, n, 1);
     for (let i = 0; i < n; i++) {
       L[i] = Math.tanh(bl[i]); if (R !== L) R[i] = Math.tanh(br[i]);

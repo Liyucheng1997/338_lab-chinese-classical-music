@@ -1,4 +1,4 @@
-// 丝竹三韵：Three.js 殿堂中的古筝、二胡、唢呐。
+// 丝竹三韵：Three.js 殿堂中的古筝、二胡、唢呐、琵琶。
 // 曲目由 Worker 用物理建模整曲合成，播放时以音频时钟驱动三维演奏动画；亲手演奏走 AudioWorklet 实时引擎。
 import * as THREE from 'three';
 import { PIECES } from '../src/pieces.js';
@@ -11,20 +11,23 @@ import { Effects } from './scene/Effects.js';
 import { Guzheng } from './scene/Guzheng.js';
 import { Erhu } from './scene/Erhu.js';
 import { Suona } from './scene/Suona.js';
+import { Pipa } from './scene/Pipa.js';
 import { createHandMaterials } from './scene/Hand.js';
 import { GuzhengGirl, ErhuOldMan, SuonaMan } from './scene/figure/Performers.js';
+import { PipaLady } from './scene/figure/PipaLady.js';
+import { PIPA_OPEN } from '../src/dsp/pipa.js';
 import { lastStarted, mtof, clamp } from './scene/anim.js';
 import {
   createWoodTexture, createGuzhengTopTexture, createGuzhengSideTexture, createPythonSkinTexture, createSoundWindowTexture,
   createBrassTextures, createLacquerTexture, createFloorTextures, createWallTexture, createLatticeTexture, createGlowTexture,
-  createFadeTexture, createShanshuiTexture, createRugTexture,
+  createFadeTexture, createShanshuiTexture, createRugTexture, createPipaFaceTexture,
 } from './scene/textures.js';
 
 const $ = (id) => document.getElementById(id);
 const nextFrame = () => new Promise((r) => setTimeout(r, 16));
 const fmt = (s) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, '0')}`;
-const INST_NAME = { guzheng: '古筝', erhu: '二胡', suona: '唢呐' };
-const GLYPH = { guzheng: '筝', erhu: '胡', suona: '呐' };
+const INST_NAME = { guzheng: '古筝', erhu: '二胡', suona: '唢呐', pipa: '琵琶' };
+const GLYPH = { guzheng: '筝', erhu: '胡', suona: '呐', pipa: '琶' };
 const TUNINGS = { equal: '十二平均律', pythagorean: '五度相生律', just: '纯律' };
 
 // ───────────────────────────── 载入与建模 ─────────────────────────────
@@ -45,6 +48,7 @@ const steps = [
   }],
   ['蒙蟒皮、镂音窗', () => { tex.python = createPythonSkinTexture(); tex.soundWindow = createSoundWindowTexture(); }],
   ['打铜碗', () => { tex.brass = createBrassTextures(); }],
+  ['选桐木、做琵琶面板', () => { tex.pipaFace = createPipaFaceTexture(); }],
   ['髹漆、铺地衣', () => {
     tex.lacquer = createLacquerTexture();
     tex.column = createLacquerTexture({ base: '#5e120d', paint: '#240805', accent: '#b8883e', seed: 41 });
@@ -73,6 +77,7 @@ const handMats = {
   guzheng: createHandMaterials(tex, { skin: '#ecc7ae', sheen: 0xffb4a4, nail: 0xf0c4ba }),
   erhu: createHandMaterials(tex, { skin: '#c69d84', sheen: 0xd9a896, nail: 0xd9bca6 }),
   suona: createHandMaterials(tex, { skin: '#bb8a6a', sheen: 0xd9a080, nail: 0xd2a88c }),
+  pipa: createHandMaterials(tex, { skin: '#e8c2a6', sheen: 0xffb09c, nail: 0xf2c8bc }),
 };
 const guzheng = new Guzheng(stage.scene, tex, handMats.guzheng, effects, { hand: { forearm: false, scale: 0.9 } });
 guzheng.group.position.set(0, DAIS_TOP, 0.12);
@@ -91,29 +96,36 @@ const oldman = new ErhuOldMan(erhu, handMats.erhu);
 progress(0.8, '装哨、试音孔……');
 await nextFrame();
 const suona = new Suona(stage.scene, tex, handMats.suona, effects, { hand: { forearm: false }, baseY: 1.2 });
-suona.group.position.set(1.95, DAIS_TOP, 0.32);
-suona.group.rotation.y = -0.55;
+suona.group.position.set(2.62, DAIS_TOP, 0.52);
+suona.group.rotation.y = -0.62;
 progress(0.84, '唢呐匠登台……');
 await nextFrame();
 const suonaMan = new SuonaMan(suona, handMats.suona);
-const INSTS = { guzheng, erhu, suona };
-const PLAYERS = { guzheng: girl, erhu: oldman, suona: suonaMan };
-const pickables = [...guzheng.pickables, ...erhu.pickables, ...suona.pickables];
+progress(0.86, '上琵琶弦、排相品……');
+await nextFrame();
+const pipa = new Pipa(stage.scene, tex, handMats.pipa, effects, { hand: { forearm: false, scale: 0.86 }, baseY: 0.56 });
+pipa.group.position.set(1.48, DAIS_TOP, 0.2);
+pipa.group.rotation.y = -0.36;
+const lady = new PipaLady(pipa, handMats.pipa);
+const INSTS = { guzheng, erhu, suona, pipa };
+const PLAYERS = { guzheng: girl, erhu: oldman, suona: suonaMan, pipa: lady };
+const pickables = [...guzheng.pickables, ...erhu.pickables, ...suona.pickables, ...pipa.pickables];
 progress(0.88, '点灯……');
 await nextFrame();
 stage.renderer.compile(stage.scene, stage.camera);
-if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') window.__sz = { stage, guzheng, erhu, suona, girl, oldman, suonaMan, THREE };
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') window.__sz = { stage, guzheng, erhu, suona, pipa, girl, oldman, suonaMan, lady, THREE };
 
 // ───────────────────────────── 相机 ─────────────────────────────
 const VIEWS = {
-  all: { pos: new THREE.Vector3(0, 2.45, 6.3), target: new THREE.Vector3(0, 0.85, 0) },
+  all: { pos: new THREE.Vector3(0.4, 2.6, 7.2), target: new THREE.Vector3(0.4, 0.85, 0) },
   guzheng: { pos: new THREE.Vector3(0.45, 1.62, 1.75), target: new THREE.Vector3(-0.1, 0.92, -0.08) },
   erhu: { pos: new THREE.Vector3(-1.45, 1.4, 1.75), target: new THREE.Vector3(-2.12, 0.95, 0.15) },
-  suona: { pos: new THREE.Vector3(2.75, 1.78, 1.95), target: new THREE.Vector3(2.1, 1.3, 0.0) },
+  suona: { pos: new THREE.Vector3(3.37, 1.8, 2.25), target: new THREE.Vector3(2.72, 1.3, 0.22) },
+  pipa: { pos: new THREE.Vector3(1.78, 1.45, 1.78), target: new THREE.Vector3(1.55, 0.95, 0.26) },
 };
 const cam = stage.camera;
 const controls = stage.controls;
-cam.position.set(0, 2.6, 7.2);
+cam.position.set(0.35, 2.7, 7.8);
 controls.target.copy(VIEWS.all.target);
 let flight = null;
 let lastInteract = -99;
@@ -413,7 +425,7 @@ function stopAll() {
   playIntent++;
   if (playing) pausePlayback(playing);
   releaseLive();
-  if (liveNode) send({ type: 'guzhengOff' });
+  if (liveNode) { send({ type: 'guzhengOff' }); send({ type: 'pipaOff' }); }
 }
 
 btnPlay.addEventListener('click', togglePlay);
@@ -484,9 +496,10 @@ const HINTS = {
   guzheng: '点击<b>雁柱与琴头之间</b>的琴弦拨奏，按住划过多根弦即<b>刮奏</b>；按住<b>雁柱与琴尾之间</b>的弦为<b>按音</b>（弦音升高）。键盘 <kbd>A</kbd>–<kbd>;</kbd> 弹中音区。',
   erhu: '在<b>千斤与琴码之间</b>按住琴弦发声，上下拖动即滑音（越往下越高，低于 A4 自动用内弦）；弓会自动推拉换弓。键盘 <kbd>A</kbd>–<kbd>;</kbd> 演奏 D 调五声。',
   suona: '按住<b>木杆上的音孔</b>吹奏，沿管身拖动换音；指法按“筒音作 5”自动开闭。键盘 <kbd>A</kbd>–<kbd>;</kbd> 演奏 A 调五声。',
+  pipa: '点击<b>琴弦</b>弹奏：点在哪一品之上，左手就按在那一品（点在最低一品以下为空弦）；按住横向划过四弦即<b>扫弦</b>。键盘 <kbd>A</kbd>–<kbd>;</kbd> 演奏 D 调五声。',
   all: '选择一件乐器，镜头会移到它面前；也可以直接点击场景中的琴弦、指板与音孔。拖动旋转视角、滚轮缩放、右键平移。',
 };
-const lastLive = { guzheng: -99, erhu: -99, suona: -99 };
+const lastLive = { guzheng: -99, erhu: -99, suona: -99, pipa: -99 };
 const liveHeld = { erhu: false, suona: false };
 function setLiveInst(k, fly = true) {
   liveInst = k === 'all' ? liveInst : k;
@@ -514,6 +527,20 @@ function livePluck(i, vel) {
   send({ type: 'pluck', string: i, vel });
   guzheng.pluckLive(i, vel, audioNow());
   lastLive.guzheng = audioNow();
+}
+function livePipa(string, fret, vel) {
+  send({ type: 'pipaPluck', string, cents: fret * 100, vel });
+  pipa.pluckLive(string, fret, vel, audioNow());
+  lastLive.pipa = audioNow();
+}
+/** 琵琶键盘音：D 调五声，从子弦、中弦上选低把位。 */
+function pipaFor(midi) {
+  let best = null;
+  for (let s = 0; s < 4; s++) {
+    const f = midi - PIPA_OPEN[s];
+    if (f >= 0 && f <= 12 && (!best || f < best.fret)) best = { string: s, fret: f };
+  }
+  return best || { string: 0, fret: Math.max(0, midi - PIPA_OPEN[0]) };
 }
 function livePress(i, on) {
   send({ type: 'gPress', string: i, cents: on ? 200 : 0 });
@@ -543,6 +570,7 @@ function releaseLive() {
   drag = null;
   keysHeld.clear();
   guzheng.releaseLive(audioNow());
+  pipa.releaseLive(audioNow());
   controls.enabled = true;
 }
 
@@ -566,6 +594,12 @@ function tooltipFor(hit) {
       <div class="tt-row"><span>空弦</span><b>${midiName(m)} · ${mtof(m).toFixed(1)} Hz</b></div>
       <div class="tt-row on"><span>${d.seg === 'R' ? '雁柱—琴头' : '雁柱—琴尾'}</span><b>${d.seg === 'R' ? '拨弦 / 刮奏' : '按音（升全音）'}</b></div>`;
   }
+  if (d.inst === 'pipa') {
+    const p = pipa.pitchAt(hit.point, d.string);
+    return `<div class="tt-name">琵琶 · ${['子弦', '中弦', '老弦', '缠弦'][d.string]}</div>
+      <div class="tt-row on"><span>${p.fret ? `第 ${p.fret} ${p.fret <= 6 ? '相' : '品'}` : '空弦'}</span><b>${midiName(p.midi)} · ${mtof(p.midi).toFixed(1)} Hz</b></div>
+      <div class="tt-row"><span>操作</span><b>点击弹奏，横划为扫弦</b></div>`;
+  }
   if (d.inst === 'erhu') {
     const m = erhu.pitchAt(hit.point);
     return `<div class="tt-name">二胡 · 无品指位</div><div class="tt-row on"><span>此处</span><b>${midiName(Math.round(m))}</b></div><div class="tt-row"><span>操作</span><b>按住发声，上下滑动</b></div>`;
@@ -583,7 +617,12 @@ canvas.addEventListener('pointerdown', (e) => {
   controls.enabled = false;
   canvas.setPointerCapture(e.pointerId);
   drag = { id: e.pointerId, inst: d.inst, x: e.clientX, t: performance.now() };
-  if (d.inst === 'guzheng') {
+  if (d.inst === 'pipa') {
+    setLiveInst('pipa', false);
+    const p = pipa.pitchAt(hit.point, d.string);
+    drag.pipa = d.string;
+    livePipa(d.string, p.fret, 0.75);
+  } else if (d.inst === 'guzheng') {
     setLiveInst('guzheng', false);
     if (d.seg === 'R') { drag.string = d.string; livePluck(d.string, 0.75); }
     else { drag.press = d.string; livePress(d.string, true); }
@@ -602,7 +641,16 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (!started) return;
   if (drag && e.pointerId === drag.id) {
-    if (drag.string !== undefined) {
+    if (drag.pipa !== undefined) {
+      // 扫弦：划到另一根弦时依次弹响经过的弦（空弦）
+      const hit = pick(e, pipa.pickables);
+      if (hit && hit.object.userData.string !== drag.pipa) {
+        const to = hit.object.userData.string;
+        const step = to > drag.pipa ? 1 : -1;
+        for (let k = drag.pipa + step; step > 0 ? k <= to : k >= to; k += step) livePipa(k, 0, 0.7);
+        drag.pipa = to;
+      }
+    } else if (drag.string !== undefined) {
       const hit = pick(e, guzheng.pickables.filter((o) => o.userData.seg === 'R'));
       if (hit && hit.object.userData.string !== drag.string) {
         const to = hit.object.userData.string;
@@ -671,6 +719,10 @@ window.addEventListener('keydown', (e) => {
   if (liveInst === 'guzheng') {
     keysHeld.set(key, { inst: 'guzheng' });
     livePluck(6 + k, 0.7);
+  } else if (liveInst === 'pipa') {
+    keysHeld.set(key, { inst: 'pipa' });
+    const f = pipaFor(62 + DEG[k]);
+    livePipa(f.string, f.fret, 0.72);
   } else {
     const m = (liveInst === 'erhu' ? 62 : 69) + DEG[k];
     keysHeld.set(key, { inst: liveInst, m });
@@ -683,7 +735,7 @@ window.addEventListener('keyup', (e) => {
   if (!held) return;
   const wasLast = [...keysHeld.keys()].at(-1) === key;
   keysHeld.delete(key);
-  if (held.inst === 'guzheng' || !wasLast) return;
+  if (held.inst === 'guzheng' || held.inst === 'pipa' || !wasLast) return;
   const rest = [...keysHeld.values()].filter((h) => h.inst === held.inst);
   if (rest.length) liveOn(held.inst, rest.at(-1).m, 0.65);
   else if (!(drag && drag.inst === held.inst)) liveOff(held.inst);
@@ -707,6 +759,18 @@ function technique(kind, n) {
     if (n.k === 'chord') return '和音';
     if (n.vib) return '揉弦';
     return FINGER[n._f] ?? '';
+  }
+  if (kind === 'pipa') {
+    const str = ['子弦', '中弦', '老弦', '缠弦'][n.s] ?? '';
+    if (n.k === 'jiao') return '绞弦';
+    if (n.k === 'harm') return `${str} · 泛音`;
+    if (n.k === 'sao') return n.tr ? '扫拂' : '扫弦';
+    if (n.k === 'chord') return '双弹';
+    if (n.tr) return `${str} · 轮指`;
+    if (n.pr || n.b > 0) return `${str} · 推`;
+    if (n.b < 0) return `${str} · 拉`;
+    if (n.vib) return `${str} · 吟`;
+    return `${str} · ${n.fg === 'tiao' ? '挑' : '弹'}`;
   }
   if (kind === 'erhu') {
     const s = n._str === 0 ? '内弦' : '外弦';
@@ -746,7 +810,8 @@ function drawRoll(st, now) {
   for (; i < st.notes.length; i++) {
     const n = st.notes[i];
     if (n.t > t1) break;
-    const d = st.piece.instrument === 'guzheng' ? Math.min(n.d, n.tr ? n.d : 0.4) : n.d;
+    const plucked = st.piece.instrument === 'guzheng' || st.piece.instrument === 'pipa';
+    const d = plucked ? Math.min(n.d, n.tr ? n.d : 0.4) : n.d;
     if (n.t + d < t0) continue;
     const x = playX + (n.t - now) * pps;
     const on = n.t <= now && now < n.t + d;
@@ -770,7 +835,7 @@ $('enter-btn').addEventListener('click', () => {
   $('loader').classList.add('hide');
   started = true;
   flyTo('all', 4.5);
-  // 后台依次合成三首曲子，点选时即可播放
+  // 后台依次合成四首曲子，点选时即可播放
   states.forEach((st, i) => ensureRendered(st, 1 - i * 0.1).catch(() => {}));
   // 开场：古筝一串刮奏
   const now = audioNow() + 0.9;
@@ -811,7 +876,7 @@ function frame() {
   if (hudSrc) {
     const i = lastStarted(hudSrc.notes, hudSrc.time);
     const n = hudSrc.notes[i];
-    const d = n ? (hudSrc.kind === 'guzheng' ? Math.max(0.35, n.tr ? n.d : 0) : n.d) : 0;
+    const d = n ? ((hudSrc.kind === 'guzheng' || hudSrc.kind === 'pipa') ? Math.max(0.35, n.tr ? n.d : 0) : n.d) : 0;
     if (n && hudSrc.time < n.t + d + 0.05) {
       const m = n.m ?? GUZHENG_MIDI[n.s];
       noteName.textContent = midiName(Math.round(m));

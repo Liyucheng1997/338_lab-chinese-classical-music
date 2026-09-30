@@ -17,6 +17,7 @@ self.onmessage = (e) => {
       m: n.midi, hz: n.hz || 0, s: n.string, k: n.kind || '', st: !!n.stac,
       v: n.vel ?? 0.6, str: n.str, lg: !!n.legato, vib: !!n.vib, gl: !!n.glide, fl: !!n.flutter,
       pr: !!n.press, tr: !!n.trem || n.kind === 'tremolo',
+      f: n.fret, fg: n.finger, b: n.bend || 0, ch: n.chord || 0,
     }));
     self.postMessage({
       type: 'done', requestId, fs: r.fs, L: r.L, R: r.R, notes, duration: r.duration,

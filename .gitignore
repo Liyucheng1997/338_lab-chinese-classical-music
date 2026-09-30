@@ -5,3 +5,5 @@ Thumbs.db
 dist/
 output/*.wav
 .claude/
+音乐/
+output/transcribe/

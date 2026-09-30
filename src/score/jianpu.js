@@ -3,7 +3,8 @@
 // 【指令】（行首 @）  @title  @tonic D4  @tempo 58  @meter 4/4  @instrument guzheng
 // 【音符】 [#|b]数字[,|']*[时值][记号]     数字 1-7，0 为休止
 //          , 低八度  ' 高八度   _ 时值减半（八分、十六分…）   . 附点（×1.5）   独立的 - 延长一拍
-//          记号：~ 摇指/颤音   ^ 按音上滑   * 断奏   > 重音   ; 延长记号
+//          -_ 延长半拍、-__ 延长四分之一拍（-_. 为 3/4 拍），用于跨拍的切分音
+//          记号：~ 摇指/颤音/轮指   ^ 按音上滑/推弦   * 断奏   > 重音   ; 延长记号   x 绞弦（琵琶）   o 泛音
 //          前缀：/ 从上一音滑入（上滑）  \ 从上一音滑入（下滑）
 // 【和弦】 [3 3,]_        同时发声的多个音，时值写在 ] 后
 // 【连音】 <1' 6 5 3 2>_  括号内的音在给定总时值内等分（五连音、装饰性快速走句）；
@@ -66,6 +67,8 @@ function parseNoteToken(tok, tonic, warn) {
     else if (c === '*') flags.stac = true;
     else if (c === '>') flags.accent = true;
     else if (c === ';') flags.fermata = true;
+    else if (c === 'x') flags.jiao = true;
+    else if (c === 'o') flags.harm = true;
     else if (c === '_' || c === '.') { /* 允许标记后再写时值 */ }
     else { warn('未知记号 ' + c + ' 于 ' + tok); }
   }
@@ -196,8 +199,10 @@ export function compileJianpu(text, opts = {}) {
       else warn('未知指令 ' + tok);
       continue;
     }
-    if (tok === '-') {
-      if (lastEvent) { lastEvent.dur += 1; beat += 1; }
+    const ext = /^-(_*)(\.?)$/.exec(tok);
+    if (ext) {
+      const add = Math.pow(0.5, ext[1].length) * (ext[2] ? 1.5 : 1);
+      if (lastEvent) { lastEvent.dur += add; beat += add; }
       else warn('孤立的 -');
       continue;
     }

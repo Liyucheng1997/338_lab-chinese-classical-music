@@ -293,6 +293,23 @@ export function createGuzhengTopTexture() {
   };
 }
 
+// 琵琶面板：浅色桐木，纹理沿琴身（u 方向），漆面略提亮
+export function createPipaFaceTexture() {
+  const W = 1024;
+  const H = 512;
+  const { col, rough, bump } = woodPixels(W, H, 'paulownia', 44, 1);
+  for (let i = 0; i < col.length; i += 4) {
+    col[i] = Math.min(255, col[i] * 1.12 + 10);
+    col[i + 1] = Math.min(255, col[i + 1] * 1.12 + 10);
+    col[i + 2] = Math.min(255, col[i + 2] * 1.08 + 4);
+  }
+  return {
+    map: toTexture(imageToCanvas(col, W, H), { srgb: true }),
+    roughnessMap: toTexture(imageToCanvas(rough, W, H)),
+    bumpMap: toTexture(imageToCanvas(bump, W, H)),
+  };
+}
+
 // 古筝侧板：红木 + 金色回纹带 + 螺钿点饰
 export function createGuzhengSideTexture() {
   const W = 2048;

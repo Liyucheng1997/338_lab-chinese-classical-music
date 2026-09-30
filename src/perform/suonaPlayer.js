@@ -98,7 +98,10 @@ export function performSuona(score, s, opts = {}) {
       s.vibrato(t0 + delay, 5.6 + 0.9 * rng.next(), vibDepth * (0.75 + 0.4 * v01), 0.3, span - delay - 0.03, 0.05);
       vibbed = true;
     }
-    stats.notes.push({ t0, t1, midi: n.midi, hz, vel: v01, vib: vibbed, flutter, glide: !!glide, legato: !!legato, stac });
+    // 下一音的倚音在其拍点前 50 ms/个 就开始吹：本音实际在那时结束
+    const nextG = next && next.ev.graces ? next.ev.graces.length : 0;
+    const t1eff = nextG ? Math.max(t0 + 0.03, Math.min(t1, next.t0 - nextG * 0.05)) : t1;
+    stats.notes.push({ t0, t1: t1eff, midi: n.midi, hz, vel: v01, vib: vibbed, flutter, glide: !!glide, legato: !!legato, stac });
     prev = { hz, t1, midi: n.midi, slur: ev.slur || -2 };
   }
   return stats;

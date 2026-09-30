@@ -3,6 +3,7 @@
 import { DelayLine } from '../src/dsp/core.js';
 import { Tuning } from '../src/dsp/tuning.js';
 import { Guzheng, GUZHENG_MIDI } from '../src/dsp/guzheng.js';
+import { Pipa, PIPA_OPEN } from '../src/dsp/pipa.js';
 import { compileJianpu } from '../src/score/jianpu.js';
 import { renderPiece } from '../src/render.js';
 import { PIECES } from '../src/pieces.js';
@@ -51,6 +52,25 @@ console.log('【2】古筝 21 根空弦音准');
   ok('古筝空弦最大误差 < 1 音分', maxE < 1, `(最大 ${maxE.toFixed(2)}，平均 ${(sum / 21).toFixed(2)})`);
 }
 
+console.log('【2b】琵琶四根空弦与按品音准');
+{
+  const FS = 44100;
+  let maxE = 0, n = 0;
+  for (let i = 0; i < PIPA_OPEN.length; i++) {
+    for (const semis of [0, 2, 5, 7, 12, 19]) {
+      const p = new Pipa(FS);
+      p.pluck(0.02, i, 0.8, { cents: semis * 100 });
+      const len = FS, L = new Float64Array(len), R = new Float64Array(len);
+      p.process(L, R, 0, len);
+      const f = p.strings[i].f0 * Math.pow(2, semis / 12);
+      // 与古筝相同，避开起音后泛音最强（钢丝弦刚度使高次泛音略高）的前 0.25 秒
+      const d = detectPitch(L, Math.round(FS * 0.25), 16384, FS, f, 100);
+      maxE = Math.max(maxE, Math.abs(1200 * Math.log2(d.f0 / f))); n++;
+    }
+  }
+  ok('琵琶空弦与按品最大误差 < 2 音分', maxE < 2, `(${n} 个音，最大 ${maxE.toFixed(2)})`);
+}
+
 console.log('【3】乐谱');
 for (const p of PIECES) {
   const sc = compileJianpu(p.text, { tonic: p.tonic });
@@ -74,6 +94,9 @@ for (const p of PIECES) {
   ok(`《${p.title}》响度合理`, r_ > 0.05 && r_ < 0.2, `(RMS ${r_.toFixed(3)})`);
   if (p.instrument === 'guzheng') {
     ok(`《${p.title}》所有音符都能在 21 弦上演奏`, r.stats.skipped === 0, `(无法演奏 ${r.stats.skipped})`);
+  } else if (p.instrument === 'pipa') {
+    // 扒谱得到的和音偶有两个音只能落在同一根弦上，此时舍去较弱的一个
+    ok(`《${p.title}》几乎所有音都能在四根弦上演奏`, r.stats.skipped <= 0.02 * r.stats.notes.length, `(舍去 ${r.stats.skipped} / ${r.stats.notes.length})`);
   } else {
     const mono = Float64Array.from(dryL, (v, i) => 0.5 * (v + r.dry.R[i]));
     const v = verifyMonophonic(mono, r.fs, r.stats.notes);

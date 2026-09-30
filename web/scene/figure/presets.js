@@ -22,6 +22,24 @@ export const HEAD_PRESETS = {
       cheekBlush: 0.34, lidRed: 0.35, lipGloss: 0.42, underEye: 0.05, pores: 0.6, seed: 11,
     },
   },
+  // 琵琶女：瓜子脸、柳叶眉、杏眼低垂看琴、淡色唇
+  pipa: {
+    face: {
+      eye: { c: [0.0315, 0.002, 0.0602], R: 0.0121, up: 0.24, lo: -0.33, tilt: 0.06, hw: 1.1 },
+      lips: { y: -0.068, w: 0.0158, up: 0.0038, lo: 0.0046, pout: 0.0032 },
+      nose: { tipR: 0.007, alaX: 0.0092, alaR: 0.0052, rootR: 0.0043, tip: [0, -0.034, 0.0978] },
+      brow: { r: [0.022, 0.006, 0.009] },
+      cheek: { c: [0.034, -0.048, 0.048], r: [0.022, 0.024, 0.021], k: 0.02 },
+      cheekbone: { c: [0.045, -0.013, 0.046], r: [0.021, 0.012, 0.018] },
+      orbit: { c: [0.031, 0.001, 0.074], r: [0.0175, 0.0125, 0.008], k: 0.006 },
+    },
+    look: {
+      skin: '#e8c2a6', lip: '#b8404a', lipCenter: 0.2, blush: '#dc8a86', brow: '#231712', iris: '#26160d', sheen: 0xffb09c,
+      browX0: 0.01, browLen: 0.046, browY: 0.021, browArch: 0.0035, browDrop: 0.004, browW: 0.0026, browAmt: 0.9,
+      blink: true, lashes: true, lashLen: 0.006, liner: 0.1, linerAmt: 0.7, crease: 0.14, huadian: false,
+      cheekBlush: 0.26, lidRed: 0.22, lipGloss: 0.38, underEye: 0.06, pores: 0.7, seed: 53, blinkRest: 0.08,
+    },
+  },
   // 盲眼老琴师：颧骨突出、两颊凹陷、眼睑闭合、灰白胡茬与皱纹
   oldman: {
     face: {

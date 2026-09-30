@@ -6,11 +6,13 @@ import { Tuning, midiName } from './dsp/tuning.js';
 import { Guzheng } from './dsp/guzheng.js';
 import { Erhu } from './dsp/erhu.js';
 import { Suona } from './dsp/suona.js';
+import { Pipa } from './dsp/pipa.js';
 import { Reverb, Limiter } from './dsp/reverb.js';
 import { DCBlocker, Biquad } from './dsp/core.js';
 import { performGuzheng } from './perform/guzhengPlayer.js';
 import { performErhu } from './perform/erhuPlayer.js';
 import { performSuona } from './perform/suonaPlayer.js';
+import { performPipa } from './perform/pipaPlayer.js';
 import { rms } from './analysis/analysis.js';
 import { Timeline } from './perform/timeline.js';
 
@@ -21,12 +23,14 @@ export const INSTRUMENT_DEFAULTS = {
   guzheng: { rt60: 2.3, wet: 0.30, damp: 0.40, predelay: 0.016, size: 1.05, targetRms: 0.105, tail: 3.5 },
   erhu:    { rt60: 2.5, wet: 0.34, damp: 0.42, predelay: 0.020, size: 1.10, targetRms: 0.105, tail: 3.5 },
   suona:   { rt60: 1.8, wet: 0.26, damp: 0.38, predelay: 0.012, size: 0.95, targetRms: 0.105, tail: 2.5 },
+  pipa:    { rt60: 2.0, wet: 0.26, damp: 0.40, predelay: 0.014, size: 1.0, targetRms: 0.105, tail: 3.0 },
 };
 
 export function createInstrument(kind, fs, tuning, opts = {}) {
   if (kind === 'guzheng') return new Guzheng(fs, { tuning, ...opts });
   if (kind === 'erhu') return new Erhu(fs, { tuning, ...opts });
   if (kind === 'suona') return new Suona(fs, { tuning, ...opts });
+  if (kind === 'pipa') return new Pipa(fs, { tuning, ...opts });
   throw new Error('unknown instrument ' + kind);
 }
 
@@ -44,6 +48,7 @@ export function renderPiece(piece, o = {}) {
   let stats;
   if (piece.instrument === 'guzheng') stats = performGuzheng(score, inst, perfOpts);
   else if (piece.instrument === 'erhu') stats = performErhu(score, inst, perfOpts);
+  else if (piece.instrument === 'pipa') stats = performPipa(score, inst, perfOpts);
   else stats = performSuona(score, inst, perfOpts);
 
   const def = { ...INSTRUMENT_DEFAULTS[piece.instrument], ...(piece.reverb || {}) };
